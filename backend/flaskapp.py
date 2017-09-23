@@ -9,6 +9,10 @@ import datetime
 app = Flask(__name__, instance_relative_config=True)
 
 
+# demo, fixed.
+fixed_pid = "patient1"
+
+
 # Silly JSON encoder to encode datetime strings
 class JSONExtendedEncoder(json.JSONEncoder):
     def default(self,o):
@@ -20,9 +24,10 @@ class JSONExtendedEncoder(json.JSONEncoder):
 # Standin (!) for a real database
 app.datastore = {}
 
-#@app.before_first_request
-#def initialize():
-#    nop()
+@app.before_first_request
+def initialize():
+    with open("seedData.json") as f:
+        app.datastore = json.load(f)
 
 # Hello World
 @app.route("/", methods=["GET"])
@@ -38,7 +43,7 @@ def hospitalCollectData():
     app.datastore[tid] = {
         "hvisit": str(datetime.datetime.now()),
         "tid": tid,
-        "pid": request.form["pid"],
+        "pid": fixed_pid,
         "submission":request.form
     }
 
@@ -79,14 +84,13 @@ def truckCollectData():
 # GET stored data, see how it matches up
 @app.route("/summary", methods=["GET"])
 def fetchLoopData():
-    userId = request.args.get('id')
 
-    response = app.response_class(
-        response=json.dumps(app.datastore[userId]),
-        status=200,
-        mimetype='application/json'
-    )
-    return response
+    # future! :P
+    #userId = request.args.get('id')
+
+    # debug print
+    print(json.dumps(app.datastore, indent=4, cls=JSONExtendedEncoder))
+    return render_template('summary.htm', data=app.datastore)
 
 def main():
     parser = argparse.ArgumentParser(description='Start up test server')
